@@ -8,12 +8,29 @@ interface Props {
   speed: number
   muted: boolean
   filterId: string
+  rotation: number
+  straighten: number
+  perspectiveH: number
+  perspectiveV: number
   onTimeUpdate: (time: number) => void
   onDurationLoaded: (duration: number) => void
   onPlayPause: (playing: boolean) => void
 }
 
-export default function VideoPlayer({ videoRef, src, speed, muted, filterId, onTimeUpdate, onDurationLoaded, onPlayPause }: Props) {
+export default function VideoPlayer({
+  videoRef,
+  src,
+  speed,
+  muted,
+  filterId,
+  rotation,
+  straighten,
+  perspectiveH,
+  perspectiveV,
+  onTimeUpdate,
+  onDurationLoaded,
+  onPlayPause
+}: Props) {
   const prevSrc = useRef<string | null>(null)
 
   const filter = useMemo(() => getFilterById(filterId), [filterId])
@@ -35,7 +52,15 @@ export default function VideoPlayer({ videoRef, src, speed, muted, filterId, onT
 
   const videoStyle: React.CSSProperties = {
     filter: filter.id !== 'mirror' && filter.id !== 'upside_down' ? filter.css : 'none',
-    transform: filter.id === 'mirror' ? 'scaleX(-1)' : filter.id === 'upside_down' ? 'scaleY(-1)' : 'none',
+    transform: [
+      `perspective(1000px)`,
+      `rotateX(${perspectiveV}deg)`,
+      `rotateY(${perspectiveH}deg)`,
+      `rotateZ(${rotation + straighten}deg)`,
+      filter.id === 'mirror' ? 'scaleX(-1)' : '',
+      filter.id === 'upside_down' ? 'scaleY(-1)' : '',
+    ].filter(Boolean).join(' '),
+    transition: 'transform 0.1s ease-out'
   }
 
   return (

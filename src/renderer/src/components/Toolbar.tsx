@@ -9,18 +9,38 @@ interface Props {
   state: EditorState
   showCrop: boolean
   showFilters: boolean
+  showGeometry: boolean
   onSpeedChange: (speed: number) => void
   onMuteToggle: () => void
   onCropToggle: () => void
   onCropReset: () => void
   onFilterToggle: () => void
+  onGeometryToggle: () => void
 }
 
-export default function Toolbar({ state, showCrop, showFilters, onSpeedChange, onMuteToggle, onCropToggle, onCropReset, onFilterToggle }: Props) {
+export default function Toolbar({ state, showCrop, showFilters, showGeometry, onSpeedChange, onMuteToggle, onCropToggle, onCropReset, onFilterToggle, onGeometryToggle }: Props) {
   const { t } = useT()
 
   return (
     <div className="toolbar">
+      {/* Geometry (Rotate & Perspective) */}
+      <div className="tool-section">
+        <div className="tool-label">{t.tool_geometry}</div>
+        <button
+          className={`tool-toggle-btn ${showGeometry ? 'active-accent' : (state.rotation !== 0 || state.perspectiveHorizontal !== 0 || state.perspectiveVertical !== 0 ? 'active-ok' : '')}`}
+          onClick={onGeometryToggle}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          {t.tool_geometry}
+        </button>
+      </div>
+
+      <div className="tool-divider" />
+
       {/* Filters */}
       <div className="tool-section">
         <div className="tool-label">{t.tool_filters}</div>

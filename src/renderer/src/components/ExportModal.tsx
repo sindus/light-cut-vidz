@@ -58,6 +58,10 @@ export default function ExportModal({ state, onClose }: Props) {
         speed: state.speed,
         crop: state.crop,
         filter: state.filter,
+        rotation: state.rotation,
+        straighten: state.straighten,
+        perspectiveH: state.perspectiveHorizontal,
+        perspectiveV: state.perspectiveVertical,
         muted: state.muted,
         format,
         duration: state.duration,
@@ -103,6 +107,12 @@ export default function ExportModal({ state, onClose }: Props) {
             <span className="summary-label">{t.export_crop}</span>
             <span className="summary-value">
               {state.crop ? `${state.crop.w}×${state.crop.h}` : t.export_crop_none}
+            </span>
+          </div>
+          <div className="summary-row">
+            <span className="summary-label">{t.tool_geometry}</span>
+            <span className="summary-value">
+              {state.rotation + state.straighten}° / H: {state.perspectiveHorizontal}° / V: {state.perspectiveVertical}°
             </span>
           </div>
           <div className="summary-row">

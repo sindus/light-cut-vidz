@@ -4,6 +4,8 @@ import VideoPlayer from './components/VideoPlayer'
 import Timeline from './components/Timeline'
 import Toolbar from './components/Toolbar'
 import Filters from './components/Filters'
+import GeometrySettings from './components/GeometrySettings'
+import CompositionGrid from './components/CompositionGrid'
 import ExportModal from './components/ExportModal'
 import CropOverlay from './components/CropOverlay'
 import CropFrame from './components/CropFrame'
@@ -36,6 +38,10 @@ export interface EditorState {
   cutSegments: TrimSegment[]
   crop: CropRect | null
   filter: string
+  rotation: number
+  straighten: number
+  perspectiveHorizontal: number
+  perspectiveVertical: number
 }
 
 const isMac = navigator.platform.includes('Mac')
@@ -51,6 +57,7 @@ export default function App() {
   const [showExport,     setShowExport]     = useState(false)
   const [showCrop,       setShowCrop]       = useState(false)
   const [showFilters,    setShowFilters]    = useState(false)
+  const [showGeometry,   setShowGeometry]   = useState(false)
   const [filterFrameUrl, setFilterFrameUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState<{ msg: string; progress: number } | null>(null)
   const [toast,   setToast]   = useState<string | null>(null)
@@ -77,6 +84,11 @@ export default function App() {
   const setCrop        = (crop: CropRect | null)       => set(p => ({ ...p, crop }))
   const setCutSegments = (cutSegments: TrimSegment[])  => set(p => ({ ...p, cutSegments }))
   const setFilter      = (filter: string)              => set(p => ({ ...p, filter }))
+  const setRotation    = (rotation: number)            => set(p => ({ ...p, rotation }))
+  const setStraighten  = (val: number)                 => set(p => ({ ...p, straighten: val }))
+  const setPerspectiveH = (val: number)                => set(p => ({ ...p, perspectiveHorizontal: val }))
+  const setPerspectiveV = (val: number)                => set(p => ({ ...p, perspectiveVertical: val }))
+  const resetGeometry   = ()                           => set(p => ({ ...p, rotation: 0, straighten: 0, perspectiveHorizontal: 0, perspectiveVertical: 0 }))
 
   // ─── Load video ────────────────────────────────────────────────────────────
   const loadVideo = useCallback(async (filePath: string) => {
@@ -84,6 +96,7 @@ export default function App() {
     setIsPlaying(false)
     setShowCrop(false)
     setShowFilters(false)
+    setShowGeometry(false)
     reset()
 
     try {
@@ -171,11 +184,15 @@ export default function App() {
     videoPath,
     videoUrl,
     duration,
-    speed:       editable.speed,
-    muted:       editable.muted,
-    cutSegments: editable.cutSegments,
-    crop:        editable.crop,
-    filter:      editable.filter,
+    speed:                editable.speed,
+    muted:                editable.muted,
+    cutSegments:          editable.cutSegments,
+    crop:                 editable.crop,
+    filter:               editable.filter,
+    rotation:             editable.rotation,
+    straighten:           editable.straighten,
+    perspectiveHorizontal: editable.perspectiveHorizontal,
+    perspectiveVertical:  editable.perspectiveVertical,
   }
 
   // ─── Loading screen ────────────────────────────────────────────────────────
@@ -229,10 +246,15 @@ export default function App() {
             speed={editable.speed}
             muted={editable.muted}
             filterId={editable.filter}
+            rotation={editable.rotation}
+            straighten={editable.straighten}
+            perspectiveH={editable.perspectiveHorizontal}
+            perspectiveV={editable.perspectiveVertical}
             onTimeUpdate={handleTimeUpdate}
             onDurationLoaded={setDuration}
             onPlayPause={setIsPlaying}
           />
+          <CompositionGrid visible={showCrop || showGeometry} />
           {showCrop && (
             <CropOverlay
               videoRef={videoRef}
@@ -250,11 +272,13 @@ export default function App() {
           state={editorState}
           showCrop={showCrop}
           showFilters={showFilters}
+          showGeometry={showGeometry}
           onSpeedChange={setSpeed}
           onMuteToggle={() => setMuted(!editable.muted)}
-          onCropToggle={() => { setShowCrop(v => !v); setShowFilters(false) }}
+          onCropToggle={() => { setShowCrop(v => !v); setShowFilters(false); setShowGeometry(false) }}
           onCropReset={() => { setCrop(null); setShowCrop(false) }}
-          onFilterToggle={() => { if (!showFilters) captureFrame(); setShowFilters(v => !v); setShowCrop(false) }}
+          onFilterToggle={() => { if (!showFilters) captureFrame(); setShowFilters(v => !v); setShowCrop(false); setShowGeometry(false) }}
+          onGeometryToggle={() => { setShowGeometry(v => !v); setShowCrop(false); setShowFilters(false) }}
         />
 
         {showFilters && (
@@ -262,6 +286,20 @@ export default function App() {
             activeFilterId={editable.filter}
             onSelect={setFilter}
             frameDataUrl={filterFrameUrl ?? undefined}
+          />
+        )}
+
+        {showGeometry && (
+          <GeometrySettings
+            rotation={editable.rotation}
+            straighten={editable.straighten}
+            perspectiveH={editable.perspectiveHorizontal}
+            perspectiveV={editable.perspectiveVertical}
+            onRotationChange={setRotation}
+            onStraightenChange={setStraighten}
+            onPerspectiveHChange={setPerspectiveH}
+            onPerspectiveVChange={setPerspectiveV}
+            onReset={resetGeometry}
           />
         )}
       </div>

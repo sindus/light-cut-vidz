@@ -423,6 +423,10 @@ ipcMain.handle('ffmpeg:export', async (event, options) => {
     speed,         // e.g. 1.5
     crop,          // {x, y, w, h} in original pixels, or null
     filter,        // string id
+    rotation,      // 0, 90, 180, 270
+    straighten,    // -45 to 45
+    perspectiveH,  // -45 to 45
+    perspectiveV,  // -45 to 45
     muted,         // boolean
     format,        // 'mp4' | 'mov' | 'webm' | 'gif' | 'avi'
     duration,      // total duration in seconds
@@ -447,14 +451,70 @@ ipcMain.handle('ffmpeg:export', async (event, options) => {
           // Build video filters
           const vFilters = []
 
+          // 1. Rotation & Straighten
+          const totalRotate = (rotation || 0) + (straighten || 0)
+          if (totalRotate !== 0) {
+            if (totalRotate === 90) vFilters.push('transpose=1')
+            else if (totalRotate === 180) vFilters.push('transpose=1,transpose=1')
+            else if (totalRotate === 270) vFilters.push('transpose=2')
+            else if (totalRotate === -90) vFilters.push('transpose=2')
+            else {
+              // Fine rotation. Note: ow/oh handles expanding the frame to fit rotated content
+              vFilters.push(`rotate=${totalRotate}*PI/180:ow=rotw(${totalRotate}*PI/180):oh=roth(${totalRotate}*PI/180)`)
+            }
+          }
+
+          // 2. Perspective
+          if (perspectiveH !== 0 || perspectiveV !== 0) {
+            // Simplified perspective mapping
+            // We use 'sin' to approximate the trapezoidal effect
+            const hRad = (perspectiveH || 0) * Math.PI / 180
+            const vRad = (perspectiveV || 0) * Math.PI / 180
+            
+            // We'll calculate the 4 corners. 
+            // In ffmpeg perspective, we define the source corners in the destination.
+            // This is complex, so we'll use a simplified model.
+            // For a 1000px perspective distance (matching CSS)
+            const focal = 1000
+            
+            // We need to know the width/height after rotation
+            // This is a bit tricky as we don't have it here easily, 
+            // but we can assume the filter chain handles it.
+            // However, ffmpeg's perspective filter needs coordinates.
+            // We can use expressions in the perspective filter!
+            
+            const xh = `(W*sin(${hRad}))`
+            const yv = `(H*sin(${vRad}))`
+            
+            // Horizontal Perspective (tilt around Y)
+            // Left edge gets larger, right edge gets smaller (or vice versa)
+            let pFilter = ''
+            if (perspectiveH !== 0 && perspectiveV === 0) {
+              const s = Math.sin(hRad) * 0.2
+              pFilter = `perspective=x0=0:y0=-H*${s}:x1=W:y1=H*${s}:x2=0:y2=H+H*${s}:x3=W:y3=H-H*${s}:sense=destination`
+            } else if (perspectiveV !== 0 && perspectiveH === 0) {
+              const s = Math.sin(vRad) * 0.2
+              pFilter = `perspective=x0=-W*${s}:y0=0:x1=W+W*${s}:y1=0:x2=W*${s}:y2=H:x3=W-W*${s}:y3=H:sense=destination`
+            } else if (perspectiveH !== 0 || perspectiveV !== 0) {
+              // Combined (rough approximation)
+              const sh = Math.sin(hRad) * 0.2
+              const sv = Math.sin(vRad) * 0.2
+              pFilter = `perspective=x0=-W*${sv}:y0=-H*${sh}:x1=W+W*${sv}:y1=H*${sh}:x2=W*${sv}:y2=H+H*${sh}:x3=W-W*${sv}:y3=H-H*${sh}:sense=destination`
+            }
+            if (pFilter) vFilters.push(pFilter)
+          }
+
+          // 3. Crop
           if (crop) {
             vFilters.push(`crop=${Math.round(crop.w)}:${Math.round(crop.h)}:${Math.round(crop.x)}:${Math.round(crop.y)}`)
           }
 
+          // 4. Color Filters
           if (ffFilter) {
             vFilters.push(ffFilter)
           }
 
+          // 5. Speed
           if (speed !== 1) {
             vFilters.push(`setpts=${(1 / speed).toFixed(4)}*PTS`)
           }

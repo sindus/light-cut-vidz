@@ -47,6 +47,14 @@ const en = {
   filter_vignette: 'Vignette',
   filter_edges: 'Edges',
 
+  // Geometry
+  tool_geometry: 'Layout',
+  geometry_rotate: 'Rotate',
+  geometry_straighten: 'Straighten',
+  geometry_perspective_h: 'Horizontal Perspective',
+  geometry_perspective_v: 'Vertical Perspective',
+  geometry_reset: 'Reset Layout',
+
   // Export modal
   export_title: 'Export video',
   export_duration: 'Duration',
@@ -142,6 +150,14 @@ const fr: typeof en = {
   filter_posterize: 'Poster',
   filter_vignette: 'Vignette',
   filter_edges: 'Contours',
+
+  // Geometry
+  tool_geometry: 'Disposition',
+  geometry_rotate: 'Rotation',
+  geometry_straighten: 'Redresser',
+  geometry_perspective_h: 'Perspective horizontale',
+  geometry_perspective_v: 'Perspective verticale',
+  geometry_reset: 'Réinitialiser la disposition',
 
   // Export modal
   export_title: 'Exporter la vidéo',

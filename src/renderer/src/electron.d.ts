@@ -23,6 +23,10 @@ declare global {
         speed: number
         crop: { x: number; y: number; w: number; h: number } | null
         filter: string
+        rotation?: number
+        straighten?: number
+        perspectiveH?: number
+        perspectiveV?: number
         muted: boolean
         format: string
         duration: number

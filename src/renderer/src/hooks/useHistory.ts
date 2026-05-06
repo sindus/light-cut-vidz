@@ -7,6 +7,10 @@ export interface EditableState {
   crop: CropRect | null
   cutSegments: TrimSegment[]
   filter: string
+  rotation: number
+  straighten: number
+  perspectiveHorizontal: number
+  perspectiveVertical: number
 }
 
 export const defaultEditable: EditableState = {
@@ -15,6 +19,10 @@ export const defaultEditable: EditableState = {
   crop: null,
   cutSegments: [],
   filter: 'none',
+  rotation: 0,
+  straighten: 0,
+  perspectiveHorizontal: 0,
+  perspectiveVertical: 0,
 }
 
 export function useEditorHistory(initial: EditableState = defaultEditable) {
