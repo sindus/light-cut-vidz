@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
+import { getFilterById } from '../utils/filters'
 import './VideoPlayer.css'
 
 interface Props {
@@ -6,13 +7,16 @@ interface Props {
   src: string
   speed: number
   muted: boolean
+  filterId: string
   onTimeUpdate: (time: number) => void
   onDurationLoaded: (duration: number) => void
   onPlayPause: (playing: boolean) => void
 }
 
-export default function VideoPlayer({ videoRef, src, speed, muted, onTimeUpdate, onDurationLoaded, onPlayPause }: Props) {
+export default function VideoPlayer({ videoRef, src, speed, muted, filterId, onTimeUpdate, onDurationLoaded, onPlayPause }: Props) {
   const prevSrc = useRef<string | null>(null)
+
+  const filter = useMemo(() => getFilterById(filterId), [filterId])
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.playbackRate = speed
@@ -29,11 +33,17 @@ export default function VideoPlayer({ videoRef, src, speed, muted, onTimeUpdate,
     }
   }, [src, videoRef])
 
+  const videoStyle: React.CSSProperties = {
+    filter: filter.id !== 'mirror' && filter.id !== 'upside_down' ? filter.css : 'none',
+    transform: filter.id === 'mirror' ? 'scaleX(-1)' : filter.id === 'upside_down' ? 'scaleY(-1)' : 'none',
+  }
+
   return (
     <video
       ref={videoRef}
       className="video-element"
       src={src}
+      style={videoStyle}
       onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime)}
       onLoadedMetadata={(e) => onDurationLoaded(e.currentTarget.duration)}
       onPlay={() => onPlayPause(true)}

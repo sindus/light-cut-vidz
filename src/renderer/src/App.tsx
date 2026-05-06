@@ -3,6 +3,7 @@ import DropZone from './components/DropZone'
 import VideoPlayer from './components/VideoPlayer'
 import Timeline from './components/Timeline'
 import Toolbar from './components/Toolbar'
+import Filters from './components/Filters'
 import ExportModal from './components/ExportModal'
 import CropOverlay from './components/CropOverlay'
 import CropFrame from './components/CropFrame'
@@ -34,6 +35,7 @@ export interface EditorState {
   muted: boolean
   cutSegments: TrimSegment[]
   crop: CropRect | null
+  filter: string
 }
 
 const isMac = navigator.platform.includes('Mac')
@@ -46,8 +48,10 @@ export default function App() {
   const [duration,  setDuration]  = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying,   setIsPlaying]   = useState(false)
-  const [showExport,  setShowExport]  = useState(false)
-  const [showCrop,    setShowCrop]    = useState(false)
+  const [showExport,     setShowExport]     = useState(false)
+  const [showCrop,       setShowCrop]       = useState(false)
+  const [showFilters,    setShowFilters]    = useState(false)
+  const [filterFrameUrl, setFilterFrameUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState<{ msg: string; progress: number } | null>(null)
   const [toast,   setToast]   = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -55,17 +59,31 @@ export default function App() {
   // All editable properties share one undo/redo history
   const { editable, set, undo, redo, reset, canUndo, canRedo } = useEditorHistory()
 
+  const captureFrame = useCallback(() => {
+    const video = videoRef.current
+    if (!video || !video.videoWidth) return
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.drawImage(video, 0, 0)
+    setFilterFrameUrl(canvas.toDataURL('image/jpeg', 0.8))
+  }, [])
+
   // Convenience setters — each one is undoable
   const setSpeed       = (speed: number)              => set(p => ({ ...p, speed }))
   const setMuted       = (muted: boolean)              => set(p => ({ ...p, muted }))
   const setCrop        = (crop: CropRect | null)       => set(p => ({ ...p, crop }))
   const setCutSegments = (cutSegments: TrimSegment[])  => set(p => ({ ...p, cutSegments }))
+  const setFilter      = (filter: string)              => set(p => ({ ...p, filter }))
 
   // ─── Load video ────────────────────────────────────────────────────────────
   const loadVideo = useCallback(async (filePath: string) => {
     setLoading({ msg: t.loading_preparing, progress: 0 })
     setIsPlaying(false)
     setShowCrop(false)
+    setShowFilters(false)
     reset()
 
     try {
@@ -157,6 +175,7 @@ export default function App() {
     muted:       editable.muted,
     cutSegments: editable.cutSegments,
     crop:        editable.crop,
+    filter:      editable.filter,
   }
 
   // ─── Loading screen ────────────────────────────────────────────────────────
@@ -209,6 +228,7 @@ export default function App() {
             src={videoUrl!}
             speed={editable.speed}
             muted={editable.muted}
+            filterId={editable.filter}
             onTimeUpdate={handleTimeUpdate}
             onDurationLoaded={setDuration}
             onPlayPause={setIsPlaying}
@@ -229,11 +249,21 @@ export default function App() {
         <Toolbar
           state={editorState}
           showCrop={showCrop}
+          showFilters={showFilters}
           onSpeedChange={setSpeed}
           onMuteToggle={() => setMuted(!editable.muted)}
-          onCropToggle={() => setShowCrop(v => !v)}
+          onCropToggle={() => { setShowCrop(v => !v); setShowFilters(false) }}
           onCropReset={() => { setCrop(null); setShowCrop(false) }}
+          onFilterToggle={() => { if (!showFilters) captureFrame(); setShowFilters(v => !v); setShowCrop(false) }}
         />
+
+        {showFilters && (
+          <Filters
+            activeFilterId={editable.filter}
+            onSelect={setFilter}
+            frameDataUrl={filterFrameUrl ?? undefined}
+          />
+        )}
       </div>
 
       {/* Seekbar + play/pause — uses virtual time to reflect trim */}

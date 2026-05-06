@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import type { EditorState } from '../App'
 import { formatTime, getKeptSegments } from '../utils/time'
+import { getFilterById } from '../utils/filters'
 import { useT } from '../i18n'
 import './ExportModal.css'
 
@@ -56,6 +57,7 @@ export default function ExportModal({ state, onClose }: Props) {
         segments: keptSegments,
         speed: state.speed,
         crop: state.crop,
+        filter: state.filter,
         muted: state.muted,
         format,
         duration: state.duration,
@@ -67,6 +69,9 @@ export default function ExportModal({ state, onClose }: Props) {
       setProgress(null)
     }
   }
+
+  const activeFilter = getFilterById(state.filter)
+  const filterName = useT().lang === 'fr' ? activeFilter.nameFr : activeFilter.nameEn
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -81,6 +86,10 @@ export default function ExportModal({ state, onClose }: Props) {
           <div className="summary-row">
             <span className="summary-label">{t.export_duration}</span>
             <span className="summary-value">{formatTime(keptDuration)}</span>
+          </div>
+          <div className="summary-row">
+            <span className="summary-label">{t.tool_filters}</span>
+            <span className="summary-value">{filterName}</span>
           </div>
           <div className="summary-row">
             <span className="summary-label">{t.export_speed}</span>

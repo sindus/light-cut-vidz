@@ -8,17 +8,35 @@ const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4]
 interface Props {
   state: EditorState
   showCrop: boolean
+  showFilters: boolean
   onSpeedChange: (speed: number) => void
   onMuteToggle: () => void
   onCropToggle: () => void
   onCropReset: () => void
+  onFilterToggle: () => void
 }
 
-export default function Toolbar({ state, showCrop, onSpeedChange, onMuteToggle, onCropToggle, onCropReset }: Props) {
+export default function Toolbar({ state, showCrop, showFilters, onSpeedChange, onMuteToggle, onCropToggle, onCropReset, onFilterToggle }: Props) {
   const { t } = useT()
 
   return (
     <div className="toolbar">
+      {/* Filters */}
+      <div className="tool-section">
+        <div className="tool-label">{t.tool_filters}</div>
+        <button
+          className={`tool-toggle-btn ${showFilters ? 'active-accent' : (state.filter !== 'none' ? 'active-ok' : '')}`}
+          onClick={onFilterToggle}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          {state.filter === 'none' ? t.tool_filters : state.filter.charAt(0).toUpperCase() + state.filter.slice(1)}
+        </button>
+      </div>
+
+      <div className="tool-divider" />
+
       {/* Speed */}
       <div className="tool-section">
         <div className="tool-label">{t.tool_speed}</div>

@@ -5,6 +5,7 @@ const ffmpeg = require('fluent-ffmpeg')
 const ffmpegStatic = require('ffmpeg-static')
 const ffprobeInstaller = require('@ffprobe-installer/ffprobe')
 const { autoUpdater } = require('electron-updater')
+const { getFilterFfmpeg } = require('./filters')
 
 // In production, binaries are unpacked from the asar archive
 function fixAsarPath(p) {
@@ -421,6 +422,7 @@ ipcMain.handle('ffmpeg:export', async (event, options) => {
     segments,      // [{start, end}] — parts to KEEP
     speed,         // e.g. 1.5
     crop,          // {x, y, w, h} in original pixels, or null
+    filter,        // string id
     muted,         // boolean
     format,        // 'mp4' | 'mov' | 'webm' | 'gif' | 'avi'
     duration,      // total duration in seconds
@@ -430,6 +432,7 @@ ipcMain.handle('ffmpeg:export', async (event, options) => {
     try {
       const tmpDir = app.getPath('temp')
       const segmentFiles = []
+      const ffFilter = getFilterFfmpeg(filter)
 
       // Step 1: Extract and process each kept segment
       for (let i = 0; i < segments.length; i++) {
@@ -446,6 +449,10 @@ ipcMain.handle('ffmpeg:export', async (event, options) => {
 
           if (crop) {
             vFilters.push(`crop=${Math.round(crop.w)}:${Math.round(crop.h)}:${Math.round(crop.x)}:${Math.round(crop.y)}`)
+          }
+
+          if (ffFilter) {
+            vFilters.push(ffFilter)
           }
 
           if (speed !== 1) {

@@ -22,6 +22,7 @@ declare global {
         segments: { start: number; end: number }[]
         speed: number
         crop: { x: number; y: number; w: number; h: number } | null
+        filter: string
         muted: boolean
         format: string
         duration: number

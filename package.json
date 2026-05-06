@@ -1,10 +1,10 @@
 {
   "name": "lightcutvidz",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightweight video editor desktop app",
   "main": "src/main/index.js",
   "scripts": {
-    "dev": "NODE_ENV=development concurrently \"vite --config vite.config.ts\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "NODE_ENV=development concurrently \"vite --config vite.config.ts\" \"wait-on http://localhost:5173 && electron . --no-sandbox\"",
     "build": "vite build --config vite.config.ts && electron-builder",
     "vite:build": "vite build --config vite.config.ts",
     "test": "vitest run",
@@ -56,7 +56,10 @@
       "confinement": "strict",
       "grade": "stable",
       "summary": "Lightweight video editor desktop app",
-      "plugs": ["default", "removable-media"],
+      "plugs": [
+        "default",
+        "removable-media"
+      ],
       "environment": {
         "DISABLE_GPU_SANDBOX": "1"
       },
